@@ -135,7 +135,7 @@ void stack_reverse(struct stack *stack)
     }
 
     head->next = 0;
-    int value = head->value;
+    //@ int value = head->value;
     //@ close nodes(0, ints_nil);
     //@ close nodes(head, ints_cons(value, ints_nil));
     while (next != 0)
@@ -145,7 +145,7 @@ void stack_reverse(struct stack *stack)
         struct node *aux = next->next;
         next->next = head;
         // we can't dereference anything on close annotations...
-        value = next->value;
+        //@ value = next->value;
 
         head = next;
         next = aux;
@@ -163,10 +163,11 @@ int main()
     struct stack *s = create_stack();
     stack_push(s, 10);
     stack_push(s, 20);
+    stack_reverse(s);
     int result1 = stack_pop(s);
-    assert(result1 == 20);
+    assert(result1 == 10);
     int result2 = stack_pop(s);
-    assert(result2 == 10);
+    assert(result2 == 20);
     stack_dispose(s);
     return 0;
 }
