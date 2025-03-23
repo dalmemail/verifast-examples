@@ -88,6 +88,74 @@ void stack_dispose(struct stack *stack)
     free(stack);
 }
 
+/*@
+    fixpoint ints reverse_values_aux(ints values, ints aux)
+    {
+        switch (values) {
+            case ints_nil:
+                return aux;
+            case ints_cons(value, values0):
+                return reverse_values_aux(values0, ints_cons(value, aux));
+        }
+    }
+
+    fixpoint ints reverse_values(ints values)
+    {
+        return reverse_values_aux(values, ints_nil);
+    }
+@*/
+
+void stack_reverse(struct stack *stack)
+    //@ requires stack(stack, ?values);
+    //@ ensures stack(stack, reverse_values(values));
+{
+    //@ open stack(stack, values);
+    //@ open nodes(_, _);
+    // if stack has at least 2 elements (otherwise is already reversed)
+    struct node *head = stack->head;
+    // we need to put it into two separate ifs so that verifast can deduce
+    // that reverse_values(values) == values
+    if (stack->head == 0)
+    {
+        //@ close nodes(head, reverse_values(values));
+        //@ close stack(stack, reverse_values(values));
+        return;
+    }
+
+    // we need this variable anyway but we need to do it here because
+    // verifast doesn't allow dereferences on open and close annotations
+    struct node *next = stack->head->next;
+    if (stack->head->next == 0)
+    {
+        //@ open nodes(next, _);
+        //@ close nodes(next, ints_tail(reverse_values(values)));
+        //@ close nodes(head, reverse_values(values));
+        //@ close stack(stack, reverse_values(values));
+        return;
+    }
+
+    head->next = 0;
+    int value = head->value;
+    //@ close nodes(0, ints_nil);
+    //@ close nodes(head, ints_cons(value, ints_nil));
+    while (next != 0)
+        //@ invariant nodes(head, ?reversed_values_so_far) &*& nodes(next, ?not_reversed_yet) &*& reverse_values(values) == reverse_values_aux(not_reversed_yet, reversed_values_so_far);
+    {
+        //@ open nodes(next, not_reversed_yet);
+        struct node *aux = next->next;
+        next->next = head;
+        // we can't dereference anything on close annotations...
+        value = next->value;
+
+        head = next;
+        next = aux;
+        //@ close nodes(head, ints_cons(value, reversed_values_so_far));
+    }
+    stack->head = head;
+    //@ open nodes(next, _);
+    //@ close stack(stack, reverse_values(values));
+}
+
 int main()
     //@ requires true;
     //@ ensures true;
