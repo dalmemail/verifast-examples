@@ -24,15 +24,20 @@ size_t strnlen(const char* str, size_t maxlen)
     //@ ensures [f]chars(str, maxlen, cs) &*& result <= maxlen &*& (result < maxlen) ? mem('\0', cs) == true &*& result == index_of('\0', cs) : true;
 {
 	size_t ret = 0;
-	// Overflow checking needs to be off for verification: Potential overflow at str + ret
-	while ( ret < maxlen && *(str + ret) )
+	while (ret < maxlen)
 	    //@ requires [f]chars(str + ret, maxlen - ret, ?cs_aux);
 	    //@ ensures [f]chars(str + old_ret, maxlen - old_ret, cs_aux) &*& (ret < maxlen) ? mem('\0', cs_aux) == true &*& ret - old_ret == index_of('\0', cs_aux) : true;
 	{
-		ret++;
+	    // can't do auto-open since we're not consuming a predicate assertion
 	    //@ open [f]chars(_, _, _);
+	    if (!str[ret])
+	        // auto-close !
+	        break;
+
+		ret++;
 	    //@ recursive_call();
-	    //@ close [f]chars(str + old_ret, maxlen - old_ret, cs_aux);
+	    // auto-close !
+	    // close [f]chars(str + old_ret, maxlen - old_ret, cs_aux);
 	}
 	return ret;
 }
